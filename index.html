@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact</title>
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<script src="https://unpkg.com/@rive-app/canvas@2.39.2"></script>
+<script>
+(function () {
+  // Where a click goes. Uses the Cargo site the block is embedded on.
+  var params = new URLSearchParams(location.search);
+  var path = params.get('go') || '/contact-form';
+  function target() {
+    try { return new URL(path, document.referrer || location.href).href; }
+    catch (e) { return path; }
+  }
+
+  var c = document.getElementById('c');
+  var hovered = null;
+  var wasOpen = false;
+
+  var r = new rive.Rive({
+    src: 'contact.riv',
+    canvas: c,
+    artboard: 'Contact',
+    stateMachines: 'State Machine 1',
+    autoplay: true,
+    autoBind: true,
+    layout: new rive.Layout({ fit: rive.Fit.Contain }),
+    onLoad: function () {
+      r.resizeDrawingSurfaceToCanvas();
+      var vm = r.viewModelInstance;
+      hovered = vm ? vm.boolean('hovered') : null;
+    }
+  });
+
+  function isOpen() { return !hovered || hovered.value; }
+
+  c.addEventListener('pointermove', function () {
+    c.style.cursor = isOpen() ? 'pointer' : 'default';
+  });
+  // On phones the first tap unfolds it, the second tap opens the form.
+  c.addEventListener('pointerdown', function (e) {
+    wasOpen = e.pointerType === 'mouse' ? isOpen() : (hovered && hovered.value);
+  }, true);
+  c.addEventListener('click', function () {
+    if (!wasOpen) return;
+    var url = target();
+    try { window.top.location.href = url; }
+    catch (e) { window.open(url, '_top'); }
+  });
+
+  window.addEventListener('resize', function () { r.resizeDrawingSurfaceToCanvas(); });
+})();
+</script>
+</body>
+</html>
